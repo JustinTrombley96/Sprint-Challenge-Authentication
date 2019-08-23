@@ -3,31 +3,22 @@
   before granting access to the next middleware/route handler
 */
 
-module.exports = (req, res, next) => {
-	if (req.session && req.session.loggedIn) {
-		next();
-	} else {
-		res.status(401).json({ message: 'You are not Jack!' });
-	}
-};
-
 const jwt = require('jsonwebtoken');
 
 const secrets = require('../config/secrets.js');
 
 module.exports = (req, res, next) => {
 	const token = req.headers.authorization;
-
-	if (token) {
+	if (req.session && req.session.loggedIn && token) {
 		jwt.verify(token, secrets.jwtSecret, (err, decodedToken) => {
 			if (err) {
-				res.status(401).json({ message: 'invalid token' });
+				res.status(401).json({ message: 'Invalid token' });
 			} else {
 				req.user = { username: decodedToken.username };
 				next();
 			}
 		});
 	} else {
-		res.status(401).json({ message: 'you need a token' });
+		res.status(401).json({ message: 'You do not have a token or a session' });
 	}
 };
